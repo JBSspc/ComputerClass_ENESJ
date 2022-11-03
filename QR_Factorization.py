@@ -1,77 +1,68 @@
-from math import sqrt
+import numpy as np
 from pprint import pprint
-#from itertools import imap
 
-class qrFact:
+class Dec_QR:
+    def QR_Decomposition(self,A):
+        n, m = A.shape # get the shape of A
 
-    def cmp(self, a,b):
-        return (a>b)-(a<b)
+        Q = np.empty((n, n)) # initialize matrix Q
+        u = np.empty((n, n)) # initialize matrix u
 
-    def multMat(self, M,N):
-        tuple_N = zip(*N)
-        return [[sum(el_m*el_n for el_m, el_n in zip(row_m, col_n)) for col_n in tuple_N] for row_m in M]
+        u[:, 0] = A[:, 0]
+        Q[:, 0] = u[:, 0] / np.linalg.norm(u[:, 0])
 
-    def matTranspose(self, M):
-        n=len(M)
-        return [[M[i][j] for i in range(n)] for j in range(n)]
+        for i in range(1, n):
 
-    def norm(self, x):
-        return sqrt(sum([x_1**2 for x_1 in x]))
+            u[:, i] = A[:, i]
+            for j in range(i):
+                u[:, i] -= (A[:, i] @ Q[:, j]) * Q[:, j] # get each u vector
 
-    def Q_i(self,Q_min, i, j, k):
-        if i < k or j < k:
-            return float(i==j)
-        else:
-            return Q_min[i-k][j-k]
+            Q[:, i] = u[:, i] / np.linalg.norm(u[:, i]) # compute each e vetor
 
-    def houseHolderReflect(self, A):
-        n = len(A)
-        R = A
-        Q = [[0.0]*n for i in range(n)]
+        R = np.zeros((n, m))
+        for i in range(n):
+            for j in range(i, m):
+                R[i, j] = A[:, j] @ Q[:, i]
 
-        for k in range(n-1):
-            I = [[float(i==j) for i in range(n)] for j in range(n)]
+        return Q, R
 
-            x = [row[k] for row in R[k:]]
-            e = [row[k] for row in I[k:]]
-            alpha = -self.cmp(x[0],0)* self.norm(x)
+    def diag_sign(self,A):
+        "Compute the signs of the diagonal of matrix A"
 
-            u = list(map(int, lambda p,q: p + alpha * q, x, e))
-            norm_u = self.norm(u)
-            v = list(map(int, lambda p: p/norm_u,u))
+        D = np.diag(np.sign(np.diag(A)))
 
-            Q_min = [[float(i==j) - 2.0 * v[i]*v[j] for i in range(n-k)] for j in range(n-k)]
+        return D
 
-            Q_t = [[self.Q_i(Q_min,i,j,k) for i in range(n)] for j in range(n)]
+    def adjust_sign(self,Q, R):
+        """
+        Adjust the signs of the columns in Q and rows in R to
+        impose positive diagonal of Q
+        """
 
-            if k == 0:
-                Q = Q_t
-                R = self.multMat(Q_t,A)
-            else:
-                Q = self.multMat(Q_t,Q)
-                R = self.multMat(Q_t,R)
+        D = self.diag_sign(Q)
 
-        return self.matTranspose(Q), R
+        Q[:, :] = Q @ D
+        R[:, :] = D @ R
+
+        return Q, R    
 
 def main():
+    A = np.array([[1.0, 1.0, 0.0], [1.0, 0.0, 1.0], [0.0, 1.0, 1.0]])
+    qrObj=Dec_QR()
+    Q, R = qrObj.adjust_sign(*qrObj.QR_Decomposition(A))
 
-    A = [[12, -51, 4], [6, 167, -68], [-4, 24, -41]]
-    qrObj = qrFact()
-    Q,R = qrObj.houseHolderReflect(A)
-
-    print("A:")
+    print("\nMatriz A:")
     pprint(A)
-
-    print("Q:")
+    print("\nMatriz Q:")
     pprint(Q)
-
-    print("R:")
+    print("\nMatriz R:")
     pprint(R)
 
 if __name__=='__main__':
     main()
 
+
 """
 Referencias:
-    https://www.quantstart.com/articles/QR-Decomposition-with-Python-and-NumPy/
+    https://python.quantecon.org/qr_decomp.html
 """
