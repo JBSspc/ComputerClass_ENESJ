@@ -71,4 +71,7 @@ def main():
 if __name__=='__main__':
     main()
 
-    
+"""
+Referencias:
+    https://www.quantstart.com/articles/QR-Decomposition-with-Python-and-NumPy/
+"""
