@@ -2,12 +2,6 @@ import sys
 import numpy as np
 from pprint import pprint
 
-"""class Graph:
-    def __init__(self):
-
-    def plotLine():"""
-
-
 class PowerMethod:
     def __init__(self, tol):
         self.tol = tol
